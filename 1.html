@@ -1,0 +1,172 @@
+<html>
+	<head>
+		<title>vue code</title>
+	</head>
+	<body>
+		<div id="app"></div>
+		<div id="app1"></div>
+		<div id="app2"></div>
+		<div id="app3"></div>
+		<div id="app4"></div>
+
+		<!-- <script>
+			const $app = document.querySelector('#app1')
+			const $app2 = document.querySelector('#app2')
+			const $app3 = document.querySelector('#app3')
+
+			let state = {
+				text1: 'hello fatfish',
+				text2: 'hello fatfish2',
+			}
+
+			// vue2 方式
+			function vue2Effect(target) {
+				const effectList = {}
+				const effectRun = (key) => {
+					effectList[key].forEach((fun) => fun())
+				}
+				const effectAdd = (key, fun) => {
+					if (fun && typeof fun === 'function') {
+						if (!effectList[key]) effectList[key] = []
+						effectList[key].push(fun)
+					}
+				}
+				Object.keys(target).forEach((key) => {
+					let value = target[key]
+					Object.defineProperty(target, key, {
+						get() {
+							return value
+						},
+						set(val) {
+							value = val
+							effectRun(key)
+						},
+					})
+				})
+				return { effectAdd, effectRun }
+			}
+
+			const { effectAdd } = vue2Effect(state)
+
+			function effect1() {
+				console.log('执行了effect1')
+				$app.innerText = state.text1
+			}
+
+			function effect2() {
+				console.log('执行了effect2')
+				$app2.innerText = state.text2
+			}
+
+			function effect3() {
+				console.log('执行了effect3')
+				$app3.innerText = state.text2
+			}
+
+			effect1()
+			effect2()
+			effectAdd('text1', effect1)
+			effectAdd('text2', effect2)
+			effectAdd('text2', effect3)
+
+			setTimeout(() => {
+				// 1秒后希望app的内容变成hello Vue3
+				state.text1 = '1111111111'
+				setTimeout(() => {
+					state.text2 = '2222222222'
+					setTimeout(() => {
+						state.text1 = '33333333333'
+					}, 1000)
+				}, 2000)
+			}, 1000)
+		</script> -->
+
+		<script>
+			const $app = document.querySelector('#app1')
+			const $app2 = document.querySelector('#app2')
+			const $app3 = document.querySelector('#app3')
+			const $app4 = document.querySelector('#app4')
+
+			let state = {
+				text1: 'hello fatfish',
+				text2: 'hello fatfish2',
+			}
+
+			// vue3 方式
+			function vue3Effect(target, working) {
+				const effectList = {}
+				const effectRun = (key) => {
+					effectList[key]?.forEach((fun) => fun())
+				}
+				const effectAdd = (key, fun) => {
+					if (fun && typeof fun === 'function') {
+						if (!effectList[key]) effectList[key] = []
+						effectList[key].push(fun)
+					}
+				}
+				Object.keys(working).forEach((key) => {
+					const cur = working[key]
+					if (Array.isArray(cur)) {
+						cur.forEach((work) => effectAdd(key, work))
+					} else if (typeof cur === 'function') {
+						effectAdd(key, cur)
+					}
+				})
+				return new Proxy(target, {
+					get(t, key) {
+						return t[key]
+					},
+					set(t, key, value) {
+						t[key] = value
+						effectRun(key)
+					},
+				})
+			}
+
+			function effect1() {
+				console.log('执行了effect1')
+				$app.innerText = state.text1
+			}
+
+			function effect2() {
+				console.log('执行了effect2')
+				$app2.innerText = state.text2
+			}
+
+			function effect3() {
+				console.log('执行了effect3')
+				$app3.innerText = state.text2
+			}
+
+			function effect4() {
+				console.log('执行了effect4')
+				$app4.innerText = `name=${testState.name}, age=${testState.age}`
+			}
+
+			const proxyState = vue3Effect(state, { text1: [effect1], text2: [effect2, effect3] })
+
+			const testState = vue3Effect({ name: '', age: 0 }, { name: effect4, age: effect4 })
+
+			effect1()
+			effect2()
+
+			setTimeout(() => {
+				// 1秒后希望app的内容变成hello Vue3
+				proxyState.text1 = '1111111111'
+				setTimeout(() => {
+					proxyState.text2 = '2222222222'
+					setTimeout(() => {
+						proxyState.text1 = '33333333333'
+						setTimeout(() => {
+							testState.name = 'testtttttttttttt'
+							setTimeout(() => {
+								testState.name = 'test'
+								testState.age = 110
+							}, 1000)
+						}, 1000)
+					}, 1000)
+				}, 2000)
+			}, 1000)
+		</script>
+	</body>
+</html>
